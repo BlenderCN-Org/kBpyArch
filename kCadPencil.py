@@ -37,17 +37,26 @@ class kCadPencilOperator(bpy.types.Operator):
     bl_options = {'REGISTER', 'UNDO', 'PRESET'}
     bl_description = "Add CAD object"
 
+    x = bpy.props.IntProperty()
+    y = bpy.props.IntProperty()    
+
     def execute(self, context):
         print("Hello World")
+        self.report({'INFO'}, "Mouse coords are %d %d" % (self.x, self.y))
         return {'FINISHED'}
 
+    def invoke(self, context, event):
+        self.x = event.mouse_x
+        self.y = event.mouse_y
+        return self.execute(context)
+      
 def register():
-    bpy.utils.register_module(__name__)
-    #bpy.utils.register_class(kCadPencilOperator) 
+    bpy.utils.register_class(kCadPencilOperator) 
+    #bpy.utils.register_module(__name__)
     
 def unregister():
-    #bpy.utils.unregister_class(kCadPencilOperator) 
-    bpy.utils.unregister_module(__name__)
+    bpy.utils.unregister_class(kCadPencilOperator) 
+    #bpy.utils.unregister_module(__name__)
 
 if __name__ == "__main__":
     register()
