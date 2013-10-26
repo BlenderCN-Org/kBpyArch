@@ -31,6 +31,14 @@ bl_info = {
 
 import bpy
 
+index=0
+def draw_callback_px(self, context):
+    global index
+    ob = context.object
+    print('WOW COOL:',index)
+    index+=1
+
+
 class kCadPencilOperator(bpy.types.Operator):
     bl_idname = "object.simple_operator"
     bl_label = "Tool Name"
@@ -40,16 +48,33 @@ class kCadPencilOperator(bpy.types.Operator):
     x = bpy.props.IntProperty()
     y = bpy.props.IntProperty()    
 
+    def modal(self, context, event):
+        context.area.tag_redraw()
+        if event.type in {'ESC'}:
+            bpy.types.SpaceView3D.draw_handler_remove(self._handle, 'WINDOW')
+            return {'CANCELLED'}
+        return {'PASS_THROUGH'}
+
     def execute(self, context):
         print("Hello World")
         self.report({'INFO'}, "Mouse coords are %d %d" % (self.x, self.y))
         return {'FINISHED'}
 
     def invoke(self, context, event):
-        self.x = event.mouse_x
-        self.y = event.mouse_y
-        return self.execute(context)
-      
+#        self.x = event.mouse_x
+#        self.y = event.mouse_y
+#        return self.execute(context)
+        if context.area.type == 'VIEW_3D':
+            # the arguments we pass the the callback
+            args = (self, context)
+            # Add the region OpenGL drawing callback
+            # draw in view space with 'POST_VIEW' and 'PRE_VIEW'
+            self._handle = bpy.types.SpaceView3D.draw_handler_add(draw_callback_px, args, 'WINDOW', 'POST_VIEW')
+            context.window_manager.modal_handler_add(self)
+            return {'RUNNING_MODAL'}
+        else:
+            self.report({'WARNING'}, "View3D not found, cannot run operator")
+            return {'CANCELLED'}
 def register():
     bpy.utils.register_class(kCadPencilOperator) 
     #bpy.utils.register_module(__name__)
@@ -60,4 +85,3 @@ def unregister():
 
 if __name__ == "__main__":
     register()
-    
