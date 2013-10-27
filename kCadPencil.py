@@ -46,35 +46,40 @@ class kCadPencilOperator(bpy.types.Operator):
     bl_description = "Add CAD object"
 
     x = bpy.props.IntProperty()
-    y = bpy.props.IntProperty()    
+    y = bpy.props.IntProperty()
 
+
+#    def modal(self, context, event):
+#        context.area.tag_redraw()
+#        if event.type in {'ESC'}:
+#            bpy.types.SpaceView3D.draw_handler_remove(self._handle, 'WINDOW')
+#            return {'CANCELLED'}
+#        return {'PASS_THROUGH'}
     def modal(self, context, event):
-        context.area.tag_redraw()
-        if event.type in {'ESC'}:
-            bpy.types.SpaceView3D.draw_handler_remove(self._handle, 'WINDOW')
+        print("Mouse coords are %d %d" % (self.x, self.y))
+        if event.type == 'MOUSEMOVE':  # Apply
+            self.value = event.mouse_x
+            self.execute(context)
+        elif event.type == 'LEFTMOUSE':  # Confirm
+            self.x = event.mouse_x
+            self.y = event.mouse_y
+            #return {'FINISHED'}
+            self.report({'INFO'}, "Mouse coords are %d %d" % (self.x, self.y))
+            return {'RUNNING_MODAL'}
+        elif event.type in ('RIGHTMOUSE', 'ESC'):  # Cancel
             return {'CANCELLED'}
-        return {'PASS_THROUGH'}
+        return {'RUNNING_MODAL'}
 
     def execute(self, context):
         print("Hello World")
-        self.report({'INFO'}, "Mouse coords are %d %d" % (self.x, self.y))
-        return {'FINISHED'}
+#        self.report({'INFO'}, "Mouse coords are %d %d" % (self.x, self.y))
+#        return {'FINISHED'}
 
     def invoke(self, context, event):
-#        self.x = event.mouse_x
-#        self.y = event.mouse_y
-#        return self.execute(context)
-        if context.area.type == 'VIEW_3D':
-            # the arguments we pass the the callback
-            args = (self, context)
-            # Add the region OpenGL drawing callback
-            # draw in view space with 'POST_VIEW' and 'PRE_VIEW'
-            self._handle = bpy.types.SpaceView3D.draw_handler_add(draw_callback_px, args, 'WINDOW', 'POST_VIEW')
-            context.window_manager.modal_handler_add(self)
-            return {'RUNNING_MODAL'}
-        else:
-            self.report({'WARNING'}, "View3D not found, cannot run operator")
-            return {'CANCELLED'}
+        self.execute(context)
+        context.window_manager.modal_handler_add(self)
+        return {'RUNNING_MODAL'}
+
 def register():
     bpy.utils.register_class(kCadPencilOperator) 
     #bpy.utils.register_module(__name__)
