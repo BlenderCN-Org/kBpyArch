@@ -26,18 +26,10 @@ bl_info = {
     "warning": "", # used for warning icon and text in addons panel
     "wiki_url": "http://wiki.blender.org/index.php",
     "tracker_url": "https://projects.blender.org",
-    "category": "Add Mesh"}
+    "category": "Object"}
 
 
 import bpy
-
-index=0
-def draw_callback_px(self, context):
-    global index
-    ob = context.object
-    print('WOW COOL:',index)
-    index+=1
-
 
 class kCadPencilOperator(bpy.types.Operator):
     bl_idname = "object.simple_operator"
@@ -45,8 +37,10 @@ class kCadPencilOperator(bpy.types.Operator):
     bl_options = {'REGISTER', 'UNDO', 'PRESET'}
     bl_description = "Add CAD object"
 
-    x = bpy.props.IntProperty()
-    y = bpy.props.IntProperty()
+    def __init__(self):
+      self.primitive = None
+      self.x = bpy.props.IntProperty()
+      self.y = bpy.props.IntProperty()
 
 
 #    def modal(self, context, event):
@@ -56,36 +50,64 @@ class kCadPencilOperator(bpy.types.Operator):
 #            return {'CANCELLED'}
 #        return {'PASS_THROUGH'}
     def modal(self, context, event):
-        print("Mouse coords are %d %d" % (self.x, self.y))
-        if event.type == 'MOUSEMOVE':  # Apply
+        print('modal event:', str(event.type))
+        if event.type == 'MOUSEMOVE':
             self.value = event.mouse_x
             self.execute(context)
-        elif event.type == 'LEFTMOUSE':  # Confirm
+        elif event.type == 'LEFTMOUSE' and event.value == 'PRESS':  # Confirm
             self.x = event.mouse_x
             self.y = event.mouse_y
-            #return {'FINISHED'}
-            self.report({'INFO'}, "Mouse coords are %d %d" % (self.x, self.y))
+            print("Mouse coords are %d %d" % (self.x, self.y))
             return {'RUNNING_MODAL'}
         elif event.type in ('RIGHTMOUSE', 'ESC'):  # Cancel
             return {'CANCELLED'}
         return {'RUNNING_MODAL'}
 
     def execute(self, context):
-        print("Hello World")
-#        self.report({'INFO'}, "Mouse coords are %d %d" % (self.x, self.y))
-#        return {'FINISHED'}
+        pass
 
     def invoke(self, context, event):
         self.execute(context)
         context.window_manager.modal_handler_add(self)
         return {'RUNNING_MODAL'}
+      
+class kCadPencilPolyline(kCadPencilOperator):
+    bl_idname = "object.draw_polyline"
+    bl_label = "kCad polyline"
+    bl_options = {'REGISTER', 'UNDO', 'PRESET'}
+    bl_description = "Add CAD polyline object"
+    
+    def __init__(self):
+      self.primitive = 'line'
+  
+class kCadPanel(bpy.types.Panel):
+    """A Custom Panel in the Viewport Toolbar"""
+    bl_label = "kCad draw panel"
+    bl_space_type = 'VIEW_3D'
+    bl_region_type = 'TOOLS'
+
+    def draw(self, context):
+        layout = self.layout
+
+        row = layout.row()
+        row.label(text="Add Objects:")
+
+        split = layout.split()
+        col = split.column(align=True)
+
+        #col.operator("mesh.primitive_plane_add", text="PolyLine", icon='MESH_PLANE')
+        col.operator("object.draw_polyline", text="PolyLine", icon='MESH_PLANE')
 
 def register():
     bpy.utils.register_class(kCadPencilOperator) 
+    bpy.utils.register_class(kCadPencilPolyline) 
+    bpy.utils.register_class(kCadPanel)
     #bpy.utils.register_module(__name__)
     
 def unregister():
     bpy.utils.unregister_class(kCadPencilOperator) 
+    bpy.utils.unregister_class(kCadPencilPolyline) 
+    bpy.utils.unregister_class(kCadPanel)
     #bpy.utils.unregister_module(__name__)
 
 if __name__ == "__main__":
