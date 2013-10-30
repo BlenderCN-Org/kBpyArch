@@ -30,6 +30,21 @@ bl_info = {
 
 
 import bpy
+import bgl 
+
+def mouse2space(view, x, y):
+  if view.type != 'VIEW_3D':
+    print("Error: not 3d view")
+    return None
+  
+  bgl.glGetFloat(GL_PROJECTION_MATRIX, projection);
+  bgl.glGetFloat(GL_MODELVIEW_MATRIX, modelview);
+  bgl.glGetInteger(GL_VIEWPORT, viewport);
+  
+  winX = x; 
+  winY = viewport[3] - y; 
+  print ('VP x,y',winX,winY)
+  
 
 class kCadPencilOperator(bpy.types.Operator):
     bl_idname = "object.simple_operator"
@@ -50,14 +65,16 @@ class kCadPencilOperator(bpy.types.Operator):
 #            return {'CANCELLED'}
 #        return {'PASS_THROUGH'}
     def modal(self, context, event):
-        print('modal event:', str(event.type))
+        #print('modal event:', str(event.type))
         if event.type == 'MOUSEMOVE':
             self.value = event.mouse_x
             self.execute(context)
         elif event.type == 'LEFTMOUSE' and event.value == 'PRESS':  # Confirm
             self.x = event.mouse_x
             self.y = event.mouse_y
-            print("Mouse coords are %d %d" % (self.x, self.y))
+            if bpy.context.area.type == 'VIEW_3D':
+              print("Mouse coords are %d %d %s" % (self.x, self.y,bpy.context.area.type))
+              mouse2space(bpy.context.area, self.x, self.y)
             return {'RUNNING_MODAL'}
         elif event.type in ('RIGHTMOUSE', 'ESC'):  # Cancel
             return {'CANCELLED'}
