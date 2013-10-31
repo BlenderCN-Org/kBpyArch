@@ -32,17 +32,20 @@ bl_info = {
 import bpy
 import bgl 
 
-def mouse2space(view, x, y):
-  if view.type != 'VIEW_3D':
+def mouse2space(area, x, y):
+  if area.type != 'VIEW_3D':
     print("Error: not 3d view")
     return None
   
-  bgl.glGetFloat(GL_PROJECTION_MATRIX, projection);
-  bgl.glGetFloat(GL_MODELVIEW_MATRIX, modelview);
-  bgl.glGetInteger(GL_VIEWPORT, viewport);
+  viewport = [0, 0, area.width, area.height]
   
-  winX = x; 
-  winY = viewport[3] - y; 
+  #bgl.glGetFloat(GL_PROJECTION_MATRIX, projection);
+  #bgl.glGetFloat(GL_MODELVIEW_MATRIX, modelview);
+  #bgl.glGetInteger(GL_VIEWPORT, viewport);
+  projection = area.spaces[0].region_3d.perspective_matrix
+  modelview = area.spaces[0].region_3d.view_matrix
+  winX = x 
+  winY = y #viewport[3] - y; 
   print ('VP x,y',winX,winY)
   
 
