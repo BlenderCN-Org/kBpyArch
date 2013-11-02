@@ -39,7 +39,7 @@ def gl_draw_callback(self, context):
   
   if points == None:
     return
-  
+          
   print('draw callback')
   bgl.glColor4f(0.7, 0.7, 0.7, 0.5)  
   bgl.glLineWidth(1)  
