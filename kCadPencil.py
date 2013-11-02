@@ -32,7 +32,31 @@ bl_info = {
 import bpy
 import bgl 
 
+points = []
+
+def gl_draw_callback(self, context):
+  global points
+  
+  if points == None:
+    return
+  
+  print('draw callback')
+  bgl.glColor4f(0.7, 0.7, 0.7, 0.5)  
+  bgl.glLineWidth(1)  
+  
+  bgl.glBegin(bgl.GL_LINES)  
+  for i in range(0, len(points) - 1):  
+    print('set line:', points)
+    bgl.glVertex3f(points[i][0],points[i][1],points[i][2])  
+    bgl.glVertex3f(points[i+1][0],points[i+1][1],points[i+1][2])  
+  bgl.glEnd()  
+  
+  bgl.glLineWidth(1)  
+  bgl.glDisable(bgl.GL_BLEND)  
+  bgl.glColor4f(0.0, 0.0, 0.0, 1.0)  
+    
 def mouse2space(area, x, y):
+  global points
   if area.type != 'VIEW_3D':
     print("Error: not 3d view")
     return None
@@ -44,10 +68,13 @@ def mouse2space(area, x, y):
   #bgl.glGetInteger(GL_VIEWPORT, viewport);
   projection = area.spaces[0].region_3d.perspective_matrix
   modelview = area.spaces[0].region_3d.view_matrix
+  imodelview = area.spaces[0].region_3d.view_matrix.inverted()
+  cpos = [imodelview[0][3], imodelview[1][3], imodelview[2][3]]
   winX = x 
   winY = y #viewport[3] - y; 
   print ('VP x,y',winX,winY)
-  
+  print ('CPOS ',cpos)  
+  points = [cpos, [0, 0, 0]]
 
 class kCadPencilOperator(bpy.types.Operator):
     bl_idname = "object.simple_operator"
@@ -68,7 +95,9 @@ class kCadPencilOperator(bpy.types.Operator):
 #            return {'CANCELLED'}
 #        return {'PASS_THROUGH'}
     def modal(self, context, event):
+        global points
         #print('modal event:', str(event.type))
+        context.area.tag_redraw()
         if event.type == 'MOUSEMOVE':
             self.value = event.mouse_x
             self.execute(context)
@@ -81,6 +110,7 @@ class kCadPencilOperator(bpy.types.Operator):
             return {'RUNNING_MODAL'}
         elif event.type in ('RIGHTMOUSE', 'ESC'):  # Cancel
             return {'CANCELLED'}
+
         return {'RUNNING_MODAL'}
 
     def execute(self, context):
@@ -89,6 +119,7 @@ class kCadPencilOperator(bpy.types.Operator):
     def invoke(self, context, event):
         self.execute(context)
         context.window_manager.modal_handler_add(self)
+        self.hdraw = context.region.callback_add(gl_draw_callback,(self, context),'POST_PIXEL')
         return {'RUNNING_MODAL'}
       
 class kCadPencilPolyline(kCadPencilOperator):
